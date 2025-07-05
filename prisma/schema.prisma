@@ -1,0 +1,285 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum PaymentType {
+  CASH
+  SBP
+  CARD
+}
+
+enum PaymentCondition {
+  PREPAYMENT
+  UPON_RECEIPT
+}
+
+enum ReceiveWay {
+  PICKUP
+  DELIVERY
+}
+
+enum StoreStatus {
+  DRAFT
+  PENDING_MODERATION
+  PUBLISHED
+  REJECTED
+  ARCHIVED
+  SUSPENDED
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PENDING_CONFIRMATION
+  CONFIRMED
+  PREPARING
+  READY_FOR_PICKUP
+  OUT_FOR_DELIVERY
+  DELIVERED
+  COMPLETED
+  CANCELLED_BY_USER
+  CANCELLED_BY_STORE
+  REFUNDED
+}
+
+model User {
+  id           String  @id @default(cuid())
+  telegramId   BigInt  @unique // Telegram User ID (can be large)
+  username     String? @unique // Telegram username
+  firstName    String?
+  lastName     String?
+  middleName     String?
+  avatarUrl    String? // Telegram photo URL
+  isBot        Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownedStores      Store[]    @relation("StoreOwner")
+  employeeAt       Employee[]
+  ordersAsCustomer Order[]    @relation("CustomerOrders")
+  // Used for Telegram Mini App auth, can be cleared after use
+  telegramAuthDate Int?
+  telegramHash     String?
+
+  @@index([telegramId])
+  @@index([username])
+}
+
+model Store {
+  id          String      @id @default(cuid())
+  name        String
+  description String
+  bannerUrl   String?
+  bannerName  String?
+  status      StoreStatus @default(DRAFT)
+  theme       String?
+
+  // Theme (maps to ConsumerTheme)
+  themeColorsBackground     String? @default("#FFFFFF")
+  themeColorsAccent         String? @default("#6200EE")
+  themeColorsCardBackground String? @default("#F5F5F5")
+  themeColorsCardBorder     String? @default("#E0E0E0")
+  themeColorsGeneral        String?
+  themeColorsSecondary      String?
+  themeColorsWhite          String? @default("#FFFFFF")
+
+  ownerId String
+  owner   User   @relation("StoreOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  categories         Category[]
+  paymentMethods     StorePaymentMethod[]
+  paymentConditions  StorePaymentCondition[]
+  deliveryMethods    StoreDeliveryMethod[]
+  employees          Employee[]
+  orders             Order[]
+  storeBot           StoreBot?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model StorePaymentMethod {
+  id        String           @id @default(cuid())
+  storeId   String
+  store     Store            @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  type      PaymentType
+  isEnabled Boolean          @default(true)
+
+  @@unique([storeId, type])
+  @@index([storeId])
+}
+
+model StorePaymentCondition {
+  id        String           @id @default(cuid())
+  storeId   String
+  store     Store            @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  condition PaymentCondition
+  isEnabled Boolean          @default(true)
+
+  @@unique([storeId, condition])
+  @@index([storeId])
+}
+
+model StoreDeliveryMethod {
+  id         String     @id @default(cuid())
+  storeId    String
+  store      Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  receiveWay ReceiveWay
+  details    String? // E.g., Pickup address, delivery terms
+  isEnabled  Boolean    @default(true)
+
+  @@unique([storeId, receiveWay])
+  @@index([storeId])
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  priority  Int       @default(0)
+  imageUrl  String?
+  imageName String?
+  storeId   String
+  store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  products  Product[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([storeId])
+}
+
+model Product {
+  id            String             @id @default(cuid())
+  name          String
+  description   String?
+  imageUrl      String?
+  imageName     String?
+  priceAmount   Float // Consider Decimal for precision: Decimal?
+  priceCurrency String             @default("RUB")
+  isActive      Boolean            @default(true)
+  categoryId    String
+  category      Category           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  parameters    ProductParameter[]
+  orderItems    OrderItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+}
+
+model ProductParameter {
+  id          String  @id @default(cuid())
+  text        String
+  priceAmount Float
+  // priceCurrency String? // Typically inherits from product
+  productId   String
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model Employee {
+  id          String    @id @default(cuid())
+  userId      String // Links to a User model instance (Telegram User)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeId     String
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  accessCode  String    @unique // Unique code for this employee for this store
+  role        String? // e.g., "manager", "staff"
+  isActive    Boolean   @default(true)
+  joinedAt    DateTime  @default(now())
+  lastLoginAt DateTime?
+
+  @@unique([userId, storeId]) // A user can be an employee of a store only once
+  @@index([storeId])
+  @@index([userId])
+  @@index([accessCode])
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  shortId     String      @unique @default(cuid()) // User-friendly order ID
+  storeId     String
+  store       Store       @relation(fields: [storeId], references: [id], onDelete: Restrict)
+  customerId  String
+  customer    User        @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Restrict)
+  status      OrderStatus @default(PENDING_CONFIRMATION)
+  totalAmount Float
+  currency    String      @default("RUB")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  chosenPaymentType      PaymentType
+  chosenPaymentCondition PaymentCondition
+  chosenReceiveWay       ReceiveWay
+
+  // Delivery details
+  deliveryAddress     String?
+  deliveryLat         Float?
+  deliveryLon         Float?
+  customerPhoneNumber String?
+  customerName        String?
+
+  items         OrderItem[]
+  statusHistory OrderStatusHistory[]
+
+  @@index([storeId])
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([shortId])
+}
+
+model OrderItem {
+  id                 String  @id @default(cuid())
+  orderId            String
+  order              Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId          String
+  // product         Product   @relation(fields: [productId], references: [id], onDelete: Restrict) // Product might be deleted, so store details
+  productSnapshotId  String? // Reference to the product at the time of order, if you snapshot products
+  productName        String // Denormalized for history
+  productDescription String?
+  productImageUrl      String?
+  quantity           Int
+  unitPrice          Float // Price at the time of order
+  totalPrice         Float
+  selectedParameters Json? // [{ "text": "Large", "priceAmount": 50.00 }]
+  Product            Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  changedAt DateTime    @default(now())
+  notes     String? // e.g., reason for cancellation, by whom
+
+  @@index([orderId])
+}
+
+model StoreBot {
+  id        String   @id @default(cuid())
+  storeId   String   @unique
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  botToken  String   @unique
+  username  String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([storeId])
+  @@index([botToken])
+  @@index([username])
+}

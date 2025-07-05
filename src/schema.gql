@@ -1,0 +1,432 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input AuthInput {
+  """Данные инициализации от Телеграма"""
+  initData: String!
+}
+
+"""
+The `BigInt` scalar type represents non-fractional signed whole numeric values.
+"""
+scalar BigInt
+
+type Category {
+  createdAt: DateTime!
+  id: ID!
+  imageName: String
+  imageUrl: String
+  name: String!
+  priority: Float!
+  products: [Product!]
+  store: Store!
+  updatedAt: DateTime!
+}
+
+input CategoryInput {
+  imageName: String!
+  imageUrl: String!
+  name: String!
+  priority: Float
+  products: [ProductInput!]
+}
+
+type CategoryResponseDto {
+  createdAt: DateTime
+  id: ID!
+  imageName: String
+  imageUrl: String
+  name: String!
+  priority: Float!
+  products: [ProductResponseDto!]
+  storeId: String!
+  updatedAt: DateTime
+}
+
+input CreateCategoryInput {
+  imageName: String
+  imageUrl: String
+  name: String!
+  priority: Int
+  storeId: String!
+}
+
+input CreateParameterInput {
+  priceAmount: Float
+  text: String!
+}
+
+input CreateProductInput {
+  description: String
+  imageName: String
+  imageUrl: String
+  isActive: Boolean! = true
+  name: String!
+  parameters: [CreateParameterInput]
+  priceAmount: Float
+  priceCurrency: String
+}
+
+input CreateStoreInput {
+  bannerName: String
+  bannerUrl: String
+  categories: [CategoryInput!]!
+  deliveryMethods: [StoreDeliveryMethodInput!]
+  description: String
+  name: String!
+  paymentConditions: [StorePaymentConditionInput!]
+  paymentMethods: [StorePaymentMethodInput!]
+  theme: String
+}
+
+input CreateUserDto {
+  avatarUrl: String
+  firstName: String
+  isBot: Boolean
+  lastName: String
+  telegramAuthDate: Int
+  telegramHash: String
+  telegramId: Int!
+  username: String
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Mutation {
+  approveStore(id: ID!): StoreResponseDto!
+  archiveStore(id: ID!): StoreResponseDto!
+  auth(input: AuthInput!): User!
+  createCategory(data: CreateCategoryInput!): Category!
+  createProduct(categoryId: ID!, data: CreateProductInput!): Product!
+  createStore(data: CreateStoreInput!, ownerId: ID!): StoreResponseDto!
+  createUser(createUserDto: CreateUserDto!): User!
+  deleteStore(id: ID!): StoreResponseDto!
+  publishStore(id: ID!): StoreResponseDto!
+  rejectStore(id: ID!): StoreResponseDto!
+  removeUser(id: ID!): User!
+  updateStore(data: UpdateStoreInput!, id: ID!): StoreResponseDto!
+}
+
+type Order {
+  createdAt: DateTime!
+  id: ID!
+  items: [OrderItem!]!
+  notes: String
+  status: String!
+  statusHistory: [OrderStatusHistory!]!
+  store: Store!
+  totalAmount: Float!
+  updatedAt: DateTime!
+  user: User!
+}
+
+type OrderItem {
+  createdAt: DateTime!
+  id: ID!
+  notes: String
+  price: Float!
+  product: Product!
+  quantity: Float!
+  totalPrice: Float!
+  updatedAt: DateTime!
+}
+
+type OrderItemParameterResponseDto {
+  priceAmount: Float
+  text: String!
+}
+
+type OrderItemResponseDto {
+  id: ID!
+  productDescription: String
+  productId: ID!
+  productImageUrl: String
+  productName: String!
+  productSnapshotId: ID
+  quantity: Float!
+  selectedParameters: [OrderItemParameterResponseDto!]
+  totalPrice: Float!
+  unitPrice: Float!
+}
+
+type OrderResponseDto {
+  chosenPaymentCondition: PaymentCondition!
+  chosenPaymentType: PaymentType!
+  chosenReceiveWay: ReceiveWay!
+  createdAt: DateTime
+  currency: String!
+  customerId: ID!
+  customerName: String
+  customerPhoneNumber: String
+  deliveryAddress: String
+  deliveryLat: Float
+  deliveryLon: Float
+  id: ID!
+  items: [OrderItemResponseDto!]!
+  shortId: String!
+  status: OrderStatus!
+  statusHistory: [OrderStatusHistoryResponseDto!]!
+  storeId: ID!
+  totalAmount: Float!
+  updatedAt: DateTime
+}
+
+enum OrderStatus {
+  CANCELLED_BY_STORE
+  CANCELLED_BY_USER
+  COMPLETED
+  CONFIRMED
+  DELIVERED
+  OUT_FOR_DELIVERY
+  PENDING_CONFIRMATION
+  PENDING_PAYMENT
+  PREPARING
+  READY_FOR_PICKUP
+  REFUNDED
+}
+
+type OrderStatusHistory {
+  createdAt: DateTime!
+  id: ID!
+  notes: String
+  status: String!
+  updatedAt: DateTime!
+  updatedBy: User
+}
+
+type OrderStatusHistoryResponseDto {
+  changedAt: DateTime!
+  id: ID!
+  notes: String
+  status: OrderStatus!
+}
+
+enum PaymentCondition {
+  PREPAYMENT
+  UPON_RECEIPT
+}
+
+enum PaymentType {
+  CARD
+  CASH
+  SBP
+}
+
+type Product {
+  category: Category!
+  createdAt: DateTime!
+  description: String
+  id: ID!
+  imageName: String
+  imageUrl: String
+  isActive: Boolean!
+  name: String!
+  parameters: [ProductParameter!]
+  priceAmount: Float!
+  priceCurrency: String!
+  store: Store!
+  updatedAt: DateTime!
+}
+
+input ProductInput {
+  description: String
+  imageName: String
+  imageUrl: String
+  isActive: Boolean
+  name: String!
+  parameters: [ProductParameterInput!]
+  priceAmount: Float!
+}
+
+type ProductParameter {
+  createdAt: DateTime!
+  id: ID!
+  priceAmount: Float
+  text: String!
+  updatedAt: DateTime!
+}
+
+input ProductParameterInput {
+  priceAmount: Float!
+  text: String!
+}
+
+type ProductParameterResponseDto {
+  id: ID!
+  priceAmount: Float
+  text: String!
+}
+
+type ProductResponseDto {
+  categoryId: ID!
+  createdAt: DateTime
+  description: String
+  id: ID!
+  imageName: String
+  imageUrl: String
+  isActive: Boolean!
+  name: String!
+  parameters: [ProductParameterResponseDto!]!
+  priceAmount: Float!
+  priceCurrency: String!
+  updatedAt: DateTime
+}
+
+type Query {
+  getActiveCatalog(storeId: ID!): [Category!]!
+  getCategoriesByStore(storeId: ID!): [Category!]!
+  getFullCatalog(storeId: ID!): [Category!]!
+  getProductsByCategory(categoryId: ID!): [Product!]!
+  me: User!
+  store(id: ID!): StoreResponseDto!
+  storeWithDetails(id: ID!): StoreResponseDto!
+  stores: [StoreResponseDto!]!
+  storesByOwner(ownerId: ID!): [StoreResponseDto!]!
+  userWithStores(id: ID!): User
+}
+
+enum ReceiveWay {
+  DELIVERY
+  PICKUP
+}
+
+type Store {
+  bannerName: String
+  bannerUrl: String
+  categories: [Category]
+  createdAt: DateTime!
+  deliveryMethods: [StoreDeliveryMethodConfig]
+  description: String!
+  employees: [User]
+  id: ID!
+  name: String!
+  owner: User!
+  paymentMethods: [StorePaymentMethodConfig]
+  status: StoreStatus!
+  theme: String
+  updatedAt: DateTime!
+}
+
+type StoreDeliveryMethodConfig {
+  details: String
+  id: ID!
+  isEnabled: Boolean!
+  receiveWay: ReceiveWay!
+}
+
+type StoreDeliveryMethodConfigDto {
+  details: String
+  isEnabled: Boolean!
+  receiveWay: String!
+}
+
+input StoreDeliveryMethodInput {
+  details: String
+  isEnabled: Boolean
+  receiveWay: String!
+}
+
+type StorePaymentConditionConfigDto {
+  condition: String!
+  isEnabled: Boolean!
+}
+
+input StorePaymentConditionInput {
+  condition: String
+  isEnabled: Boolean
+}
+
+type StorePaymentMethodConfig {
+  condition: PaymentCondition!
+  id: ID!
+  isEnabled: Boolean!
+  type: PaymentType!
+}
+
+type StorePaymentMethodConfigDto {
+  isEnabled: Boolean!
+  type: String!
+}
+
+input StorePaymentMethodInput {
+  condition: String
+  isEnabled: Boolean
+  type: String!
+}
+
+type StoreResponseDto {
+  bannerName: String
+  bannerUrl: String
+  categories: [CategoryResponseDto!]
+  createdAt: DateTime!
+  deliveryMethods: [StoreDeliveryMethodConfigDto!]!
+  description: String!
+  employees: [UserResponseDto!]
+  id: ID!
+  name: String!
+  orders: [OrderResponseDto!]
+  owner: UserResponseDto!
+  paymentConditions: [StorePaymentConditionConfigDto!]!
+  paymentMethods: [StorePaymentMethodConfigDto!]!
+  status: StoreStatus!
+  theme: String
+  updatedAt: DateTime!
+}
+
+enum StoreStatus {
+  ARCHIVED
+  DRAFT
+  PENDING_MODERATION
+  PUBLISHED
+  REJECTED
+  SUSPENDED
+}
+
+input UpdateStoreInput {
+  bannerName: String
+  bannerUrl: String
+  categories: [CategoryInput!]
+  deliveryMethods: [StoreDeliveryMethodInput!]
+  description: String
+  name: String
+  paymentConditions: [StorePaymentConditionInput!]
+  paymentMethods: [StorePaymentMethodInput!]
+  theme: String
+}
+
+type User {
+  avatarUrl: String
+  createdAt: DateTime!
+  employeeAt: [Store!]
+  firstName: String
+  id: ID!
+  isBot: Boolean
+  lastName: String
+  orders: [Order!]
+  ownedStores: [Store!]
+  role: String!
+  telegramAuthDate: Float
+  telegramHash: String
+  telegramId: BigInt!
+  updatedAt: DateTime!
+  username: String
+}
+
+type UserResponseDto {
+  avatarUrl: String
+  createdAt: DateTime!
+  firstName: String
+  id: ID!
+  isBot: Boolean
+  lastName: String
+  role: String!
+  telegramAuthDate: Float
+  telegramHash: String
+  telegramId: BigInt!
+  updatedAt: DateTime!
+  username: String
+}
