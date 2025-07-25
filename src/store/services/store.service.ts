@@ -80,6 +80,15 @@ export class StoreService {
       paymentMethods: true,
       paymentConditions: true,
       deliveryMethods: true,
+      categories: {
+        include: {
+          products: {
+            include: {
+              parameters: true
+            }
+          }
+        }
+      }
     });
     if (!store) {
       throw new NotFoundException(`Store with ID ${id} not found`);

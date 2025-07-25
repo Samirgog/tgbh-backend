@@ -104,6 +104,101 @@ export class StoreRepository extends BaseRepository<Store> {
     });
   }
 
+  async update(where: { id: string }, data: any, include?: any): Promise<Store> {
+    const transformedData = this.transformNestedRelations(data);
+
+    return this.prisma.store.update({
+      where,
+      data: transformedData,
+      include,
+    });
+  }
+
+  private transformNestedRelations(data: any): any {
+    const result = { ...data };
+
+    if (Array.isArray(data.categories)) {
+      result.categories = {
+        upsert: data.categories.map((category: any) => ({
+          where: { id: category.id ?? '___fake_id_to_trigger_create___' },
+          update: {
+            name: category.name,
+            priority: category.priority,
+            products: Array.isArray(category.products)
+                ? {
+                  upsert: category.products.map((product: any) => ({
+                    where: { id: product.id ?? '___fake_id_to_trigger_create___' },
+                    update: {
+                      name: product.name,
+                      description: product.description,
+                      priceAmount: product.priceAmount,
+                      imageUrl: product.imageUrl,
+                      imageName: product.imageName,
+                      parameters: Array.isArray(product.parameters)
+                          ? {
+                            upsert: product.parameters.map((param: any) => ({
+                              where: { id: param.id ?? '___fake_id_to_trigger_create___' },
+                              update: {
+                                text: param.text,
+                                priceAmount: param.priceAmount,
+                              },
+                              create: {
+                                text: param.text,
+                                priceAmount: param.priceAmount,
+                              },
+                            })),
+                          }
+                          : undefined,
+                    },
+                    create: {
+                      name: product.name,
+                      description: product.description,
+                      priceAmount: product.priceAmount,
+                      imageUrl: product.imageUrl,
+                      imageName: product.imageName,
+                      parameters: Array.isArray(product.parameters)
+                          ? {
+                            create: product.parameters.map((param: any) => ({
+                              text: param.text,
+                              priceAmount: param.priceAmount,
+                            })),
+                          }
+                          : undefined,
+                    },
+                  })),
+                }
+                : undefined,
+          },
+          create: {
+            name: category.name,
+            priority: category.priority,
+            products: Array.isArray(category.products)
+                ? {
+                  create: category.products.map((product: any) => ({
+                    name: product.name,
+                    description: product.description,
+                    priceAmount: product.priceAmount,
+                    imageUrl: product.imageUrl,
+                    imageName: product.imageName,
+                    parameters: Array.isArray(product.parameters)
+                        ? {
+                          create: product.parameters.map((param: any) => ({
+                            text: param.text,
+                            priceAmount: param.priceAmount,
+                          })),
+                        }
+                        : undefined,
+                  })),
+                }
+                : undefined,
+          },
+        })),
+      };
+    }
+
+    return result;
+  }
+
   async findByOwnerId(ownerId: string): Promise<Store[]> {
     return this.findMany({ ownerId });
   }

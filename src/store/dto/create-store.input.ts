@@ -1,4 +1,4 @@
-import { InputType, Field, Float } from '@nestjs/graphql';
+import {InputType, Field, Float, ID} from '@nestjs/graphql';
 import {
   IsBoolean,
   IsNotEmpty,
@@ -113,6 +113,10 @@ class ProductParameterInput {
 
 @InputType()
 class ProductInput {
+  @Field(() => ID, {nullable: true})
+  @IsOptional()
+  id?: string;
+
   @Field()
   @IsNotEmpty()
   @IsString()
@@ -152,17 +156,21 @@ class ProductInput {
 
 @InputType()
 class CategoryInput {
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  id?: string;
+
   @Field()
   @IsNotEmpty()
   @IsString()
   name: string;
 
-  @Field()
+  @Field({ nullable: true })
   @IsOptional()
   @IsString()
   imageUrl?: string;
 
-  @Field()
+  @Field({ nullable: true })
   @IsOptional()
   @IsString()
   imageName?: string;
