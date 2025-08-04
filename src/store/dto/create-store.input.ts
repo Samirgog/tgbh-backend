@@ -200,6 +200,7 @@ export class CreateStoreInput {
   @IsString()
   description?: string;
 
+
   @Field({ nullable: true })
   @IsOptional()
   bannerUrl?: string;
