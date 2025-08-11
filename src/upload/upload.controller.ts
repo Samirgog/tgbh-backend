@@ -21,7 +21,7 @@ export class UploadController {
     uploadFile(@UploadedFile() file: Express.Multer.File) {
         return {
             filename: file.filename,
-            url: `http://localhost:3000/uploads/${file.filename}`,
+            url: `https://samirgog-tgbh-backend-2d90.twc1.net/uploads/${file.filename}`,
         };
     }
 }
